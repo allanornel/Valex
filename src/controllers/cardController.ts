@@ -16,17 +16,25 @@ export async function createCard(req: Request, res: Response) {
 }
 
 export async function activeCard(req: Request, res: Response) {
-  const {
-    password,
-    cardNumber,
-    cvc,
-  }: { password: string; cardNumber: string; cvc: string } = req.body;
+  const { password, id, cvc }: { password: string; id: string; cvc: string } =
+    req.body;
 
-  if (!password || !cardNumber || !cvc || password.length !== 4) {
+  if (!password || !id || !cvc || password.length !== 4) {
     return res.sendStatus(422);
   }
 
-  await cardService.activeCardService(password, cardNumber, cvc);
+  await cardService.activeCardService(password, parseInt(id), cvc);
 
   return res.sendStatus(200);
+}
+
+export async function seeTransactions(req: Request, res: Response) {
+  const id: string = req.params.id;
+  if (!id) {
+    return res.sendStatus(422);
+  }
+
+  const transactions = await cardService.transactionsService(parseInt(id));
+
+  return res.status(200).send(transactions);
 }

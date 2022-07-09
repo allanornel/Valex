@@ -2,8 +2,9 @@ import dayjs from "dayjs";
 import Cryptr from "cryptr";
 import { faker } from "@faker-js/faker";
 import * as cardRepository from "./../repositories/cardRepository.js";
+import * as paymentRepository from "./../repositories/paymentRepository.js";
+import * as rechargeRepository from "./../repositories/rechargeRepository.js";
 import { findById } from "../repositories/employeeRepository.js";
-import { findByApiKey } from "../repositories/companyRepository.js";
 
 const cryptr = new Cryptr("myTotallySecretKey");
 
@@ -64,27 +65,57 @@ function createCardHolderName(name: string): string {
 
 export async function activeCardService(
   password: string,
-  id: string,
+  id: number,
   cvc: string
 ) {
-  const findCard = await cardRepository.findById(parseInt(id));
+  const findCard = await cardRepository.findById(id);
+  if (!findCard)
+    throw {
+      type: "Card not found",
+      message: "Cartão não encontrado",
+      statusCode: 404,
+    };
 
-  if (!findCard) {
-    // return res.sendStatus(404)
-  }
-  if (dayjs(findCard.expirationDate) < dayjs())
-    throw { type: "Card expirated", message: "Cartão expirou" };
+  if (dayjs(findCard.expirationDate).isBefore(dayjs().format("MM-YY")))
+    throw {
+      type: "Card expirated",
+      message: "Cartão expirou",
+      statusCode: 422,
+    };
 
   if (findCard.password)
-    throw { type: "Card is already active", message: "Cartão já foi ativado" };
+    throw {
+      type: "Card is already active",
+      message: "Cartão já foi ativado",
+      statusCode: 422,
+    };
 
   if (cryptr.decrypt(findCard.securityCode) !== cvc)
     throw {
       type: "Security Code isn't right",
       message: "CVV do cartão está incorreto",
+      statusCode: 422,
     };
 
   await cardRepository.update(findCard.id, {
     password: cryptr.encrypt(password),
   });
+}
+
+export async function transactionsService(id: number) {
+  const findCard = await cardRepository.findById(id);
+  if (!findCard)
+    throw {
+      type: "Card not found",
+      message: "Cartão não encontrado",
+      statusCode: 404,
+    };
+
+  let balance = 0;
+  const transactions = await paymentRepository.findByCardId(id);
+  const recharges = await rechargeRepository.findByCardId(id);
+  transactions.forEach((t) => (balance -= t.amount));
+  recharges.forEach((r) => (balance += r.amount));
+
+  return { balance, transactions, recharges };
 }
