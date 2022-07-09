@@ -38,3 +38,16 @@ export async function seeTransactions(req: Request, res: Response) {
 
   return res.status(200).send(transactions);
 }
+
+export async function blockCard(req: Request, res: Response) {
+  const { password, id }: { password: string; id: string } = req.body;
+  if (!password || !id) res.sendStatus(422);
+  await cardService.blockService(parseInt(id), password);
+  res.sendStatus(200);
+}
+export async function unblockCard(req: Request, res: Response) {
+  const { password, id }: { password: string; id: string } = req.body;
+  if (!password || !id) res.sendStatus(422);
+  await cardService.unblockService(parseInt(id), password);
+  res.sendStatus(200);
+}
