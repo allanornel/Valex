@@ -23,5 +23,6 @@ export default async function checkApi(
       statusCode: 404,
     };
 
+  res.locals.findApi = findApi;
   next();
 }
