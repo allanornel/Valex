@@ -10,6 +10,8 @@ export default function errorHandler(
   if (error.response) {
     return res.sendStatus(error.response.status);
   }
-
+  if (error.statusCode) {
+    return res.status(error.statusCode).send(error);
+  }
   res.sendStatus(500); // internal server error
 }
