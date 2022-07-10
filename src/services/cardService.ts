@@ -68,49 +68,85 @@ export async function activeCardService(
   id: number,
   cvc: string
 ) {
-  const findCard = await cardRepository.findById(id);
-  if (!findCard)
-    throw {
-      type: "Card not found",
-      message: "Cartão não encontrado",
-      statusCode: 404,
-    };
-
-  if (dayjs(findCard.expirationDate).isBefore(dayjs().format("MM-YY")))
-    throw {
-      type: "Card expirated",
-      message: "Cartão expirou",
-      statusCode: 422,
-    };
-
-  if (findCard.password)
+  const card = await findCard(id);
+  checkExpirationDate(card);
+  if (card.password)
     throw {
       type: "Card is already active",
       message: "Cartão já foi ativado",
       statusCode: 422,
     };
 
-  if (cryptr.decrypt(findCard.securityCode) !== cvc)
+  if (cryptr.decrypt(card.securityCode) !== cvc)
     throw {
       type: "Security Code isn't right",
       message: "CVV do cartão está incorreto",
       statusCode: 422,
     };
 
-  await cardRepository.update(findCard.id, {
+  await cardRepository.update(id, {
     password: cryptr.encrypt(password),
   });
 }
 
 export async function transactionsService(id: number) {
-  const findCard = await cardRepository.findById(id);
-  if (!findCard)
+  await findCard(id);
+  const { balance, transactions, recharges } = await getBalance(id);
+  return { balance, transactions, recharges };
+}
+
+export async function blockService(id: number, password: string) {
+  const card = await findCard(id);
+  checkExpirationDate(card);
+  checkPassword(card, password);
+
+  if (card.isBlocked === true)
+    throw {
+      type: "Card is blocked",
+      message: "Cartão já se encontra bloqueado",
+      statusCode: 422,
+    };
+  await cardRepository.update(id, { isBlocked: true });
+}
+
+export async function unblockService(id: number, password: string) {
+  const card = await findCard(id);
+  checkExpirationDate(card);
+  checkPassword(card, password);
+
+  if (card.isBlocked === false)
+    throw {
+      type: "Card isn't blocked",
+      message: "Cartão não está bloqueado",
+      statusCode: 422,
+    };
+
+  await cardRepository.update(id, { isBlocked: false });
+}
+
+export async function findCard(id: number) {
+  const card = await cardRepository.findById(id);
+
+  if (!card)
     throw {
       type: "Card not found",
       message: "Cartão não encontrado",
       statusCode: 404,
     };
 
+  return card;
+}
+
+export function checkExpirationDate(card: cardRepository.Card) {
+  if (dayjs(card.expirationDate).isBefore(dayjs().format("MM-YY")))
+    throw {
+      type: "Card expirated",
+      message: "Cartão expirou",
+      statusCode: 422,
+    };
+}
+
+export async function getBalance(id: number) {
   let balance = 0;
   const transactions = await paymentRepository.findByCardId(id);
   const recharges = await rechargeRepository.findByCardId(id);
@@ -120,68 +156,11 @@ export async function transactionsService(id: number) {
   return { balance, transactions, recharges };
 }
 
-export async function blockService(id: number, password: string) {
-  const findCard = await cardRepository.findById(id);
-  if (!findCard)
-    throw {
-      type: "Card not found",
-      message: "Cartão não encontrado",
-      statusCode: 404,
-    };
-
-  if (cryptr.decrypt(findCard.password) !== password)
+export function checkPassword(card: cardRepository.Card, password: string) {
+  if (cryptr.decrypt(card.password) !== password)
     throw {
       type: "Wrong password",
       message: "Senha incorreta",
       statusCode: 422,
     };
-
-  if (findCard.isBlocked === true)
-    throw {
-      type: "Card is blocked",
-      message: "Cartão já se encontra bloqueado",
-      statusCode: 422,
-    };
-
-  if (dayjs(findCard.expirationDate).isBefore(dayjs().format("MM-YY")))
-    throw {
-      type: "Card expirated",
-      message: "Cartão expirou",
-      statusCode: 422,
-    };
-
-  await cardRepository.update(id, { isBlocked: true });
-}
-
-export async function unblockService(id: number, password: string) {
-  const findCard = await cardRepository.findById(id);
-  if (!findCard)
-    throw {
-      type: "Card not found",
-      message: "Cartão não encontrado",
-      statusCode: 404,
-    };
-
-  if (cryptr.decrypt(findCard.password) !== password)
-    throw {
-      type: "Wrong password",
-      message: "Senha incorreta",
-      statusCode: 422,
-    };
-
-  if (findCard.isBlocked === false)
-    throw {
-      type: "Card isn't blocked",
-      message: "Cartão não está bloqueado",
-      statusCode: 422,
-    };
-
-  if (dayjs(findCard.expirationDate).isBefore(dayjs().format("MM-YY")))
-    throw {
-      type: "Card expirated",
-      message: "Cartão expirou",
-      statusCode: 422,
-    };
-
-  await cardRepository.update(id, { isBlocked: false });
 }
