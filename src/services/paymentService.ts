@@ -1,17 +1,11 @@
-import dayjs from "dayjs";
-import Cryptr from "cryptr";
-import { findById } from "../repositories/cardRepository.js";
 import * as businessRepository from "../repositories/businessRepository.js";
 import * as paymentRepository from "../repositories/paymentRepository.js";
-import * as rechargeRepository from "../repositories/rechargeRepository.js";
 import {
   checkExpirationDate,
   checkPassword,
   findCard,
   getBalance,
 } from "./cardService.js";
-
-const cryptr = new Cryptr("myTotallySecretKey");
 
 export async function payment(
   cardId: number,

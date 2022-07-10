@@ -19,8 +19,6 @@ export async function insertCardService(
       message: "Funcionário não encontrado",
       statusCode: 404,
     };
-
-  // Empregados não podem possuir mais de um cartão do mesmo tipo
   const findByType = await cardRepository.findByTypeAndEmployeeId(
     type,
     employeeId

@@ -1,4 +1,3 @@
-import { findById } from "../repositories/cardRepository.js";
 import { Company } from "../repositories/companyRepository.js";
 import * as rechargeRepository from "./../repositories/rechargeRepository.js";
 import { findCard } from "./cardService.js";
