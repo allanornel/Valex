@@ -2,7 +2,7 @@ import { findById } from "../repositories/cardRepository.js";
 import { Company } from "../repositories/companyRepository.js";
 import * as rechargeRepository from "./../repositories/rechargeRepository.js";
 
-export async function recharge(id: number, value: number, findApi: Company) {
+export async function recharge(id: number, amount: number, findApi: Company) {
   const findCard = await findById(id);
   //   TODO VER A QUESTÃO DA COMPANY vs Seus Empregados
   if (!findCard)
@@ -19,5 +19,5 @@ export async function recharge(id: number, value: number, findApi: Company) {
       statusCode: 422,
     };
 
-  await rechargeRepository.insert({ cardId: id, amount: value });
+  await rechargeRepository.insert({ cardId: id, amount });
 }
