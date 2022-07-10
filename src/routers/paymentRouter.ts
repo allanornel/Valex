@@ -4,6 +4,6 @@ import checkApi from "../middlewares/checkApiMiddleware.js";
 
 const paymentRouter = Router();
 
-paymentRouter.post("/recharge", checkApi, payment);
+paymentRouter.post("/payment", checkApi, payment);
 
 export default paymentRouter;
