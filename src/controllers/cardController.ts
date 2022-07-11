@@ -41,31 +41,3 @@ export async function unblockCard(req: Request, res: Response) {
   await cardService.unblockService(id, password);
   res.sendStatus(200);
 }
-
-export async function onlinePurchase(req: Request, res: Response) {
-  const {
-    number,
-    cardholderName,
-    securityCode,
-    expirationDate,
-    amount,
-    businessId,
-  }: {
-    number: string;
-    cardholderName: string;
-    securityCode: string;
-    expirationDate: string;
-    amount: number;
-    businessId: number;
-  } = req.body;
-
-  await cardService.onlinePurchaseService(
-    number,
-    cardholderName.toUpperCase(),
-    securityCode,
-    expirationDate,
-    amount,
-    businessId
-  );
-  res.sendStatus(200);
-}
